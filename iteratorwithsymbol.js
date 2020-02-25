@@ -19,3 +19,10 @@ let obj = {
 //     console.log(j);
 // }
 
+
+let m = obj[Symbol.iterator]();
+console.log(m.next());
+console.log(m.next());
+console.log(m.next());
+console.log(m.next());
+console.log(m.next());
