@@ -23,36 +23,6 @@ let obj = {
 let m = obj[Symbol.iterator]();
 
 
-
-
-let m = obj[Symbol.iterator]();
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-let m = obj[Symbol.iterator]();
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-let m = obj[Symbol.iterator]();
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-let m = obj[Symbol.iterator]();
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
-let m = obj[Symbol.iterator]();
-console.log(m.next());
-console.log(m.next());
-console.log(m.next());
 console.log(m.next());
 console.log(m.next());
 console.log(m.next());
