@@ -15,6 +15,7 @@ let obj = {
     }
 }
 
-for(let j of obj){
-    console.log(j);
-}
+// for(let j of obj){
+//     console.log(j);
+// }
+
