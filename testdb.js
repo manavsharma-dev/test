@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 
 let mongoDBURL = 'mongodb+srv://Manav:manav123@cluster1-learn-mzwyn.mongodb.net/testdb';
 
+//mongo "mongodb+srv://cluster1-learn-mzwyn.mongodb.net/test"  --username Manav
+
 try{
     mongoose.connect(mongoDBURL, { 
         useNewUrlParser: true ,
@@ -24,7 +26,8 @@ let modelSchema = new schema({
 
         firstName: String,
         age: Number,
-        password: Number,
+        email: String,
+        password: String,
 });
 
 let testmodel = mongoose.model('demo', modelSchema);

@@ -2,52 +2,25 @@
 
 const express = require('express'); 
 const app = express();
-const bodyParser = require('body-parser'); 
-const db = require('./testdb');
+const bodyParser = require('body-parser');
+const methods = require('./dbMethods');
 
 app.use(bodyParser.json());
 
 
-app.post('/signup',(req,res)=>{
-    //let obj = req.body;
-    db.testmodel.create(req.body,(error)=>{
-        if(error) throw error;
-    });
-    res.send('Document Created Succesfully');
-});
+app.post('/signup', methods.signUP);
 
-app.get('/data',async (req,res)=>{
-    let obj = await db.testmodel.find();
-    res.send(obj);
-    console.log(obj);
-});
+app.post('/login', methods.login);
 
-app.put('/update/:id', async (req,res)=>{
-    try{
-        let obj = await db.testmodel
-        .find({_id:req.params.id})
-        .updateOne(req.body,(error)=>{
-        if(error) throw error;
-        res.send('Updated Succesfully :)')
-    });
-    }catch(e){
-        res.status(500).send(e);
-    }
-});
+app.get('/data', methods.showDB);
 
+app.put('/cp', methods.changePass);
 
-app.delete("/delete/:id", async (req,res) => {
-    try {
-        await db.testmodel
-        .deleteOne({ _id: req.params.id });
-        res.send('Deleted Succesfully :(');
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
+app.put('/update/:id', methods.updateDB);
 
-
+app.delete("/delete/:id", methods.deleteDB);
 
 app.listen(4000,()=>{
     console.log("Listening....");
 });
+
