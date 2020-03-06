@@ -7,18 +7,24 @@ const jwt = require('jsonwebtoken');
 const saltRounds = 10;
 
 function signUP(req,res,next){
-    new Promise((resolve, reject)=>{
-        bcrypt.hash(req.body.password, saltRounds,(err, hash)=>{
-        if(err) return err;
-        req.body.password = hash;
-        resolve(req.body);
-    });
-}).then(()=>{
-    console.log(req.body);
-    db.testmodel.create(req.body);
-}).catch(err => console.log(err));
-    res.send('Document Created Succesfully');
-    return;
+
+    let chkObj =  db.testmodel.findOne({email:req.body.email});
+
+    if(!chkObj){
+        new Promise((resolve, reject)=>{
+            bcrypt.hash(req.body.password, saltRounds,(err, hash)=>{
+            if(err) return err;
+            req.body.password = hash;
+            resolve(req.body);});
+        }).then(()=>{ console.log(req.body);
+        db.testmodel.create(req.body);
+        }).catch(err => console.log(err));
+        res.send('Document Created Succesfully');
+        return;
+    }else{
+        console.log("Email Already Exists!!!");
+        res.send("Email Already Exists!!!");
+    }
 }
 
 
@@ -34,8 +40,8 @@ function login(req,res,next){
                 if(err) return err;
                 if(result == true){
                     console.log(result);
-                    let token = await jwt.sign(data.toJSON(), 'privatekey', { expiresIn: '60m' });
-                    return res.send("token : " + token + " Expires in : 60 minutes");
+                    let token = await jwt.sign(data.toJSON(), 'privatekey', { expiresIn: '2m' });
+                    return res.send("token : " + token + " Expires in : 2 minutes");
                 }else{
                     return res.send("Password Not Matched...")}
             });
@@ -54,13 +60,23 @@ async function showDB(req,res,next){
 
 async function updateDB(req,res,next){
     try{
+        let token  =  req.body.token;
+        jwt.verify(token,'privatekey', (err, decode)=>{
+            if(err) return err;
+            return console.log(decode);
+        });
+
         let data = req.body;
-        if(data.hasOwnProperty('password')){
-            res.send(' Use Change Password API : /changepassword');
+        if (data.email === token.email){
+            if(data.hasOwnProperty('password')){
+                res.send(' Use Change Password API : /changepassword');
+            }else{
+                await db.testmodel.updateOne({_id:req.params.id}, data,(error)=>{
+                    if(error) return error;
+                    return res.send('Updated Succesfully :)')});}
         }else{
-            await db.testmodel.updateOne({_id:req.params.id}, data,(error)=>{
-                if(error) return error;
-                return res.send('Updated Succesfully :)')});}
+            res.send("Either Access Token Expired or Wrong ");
+        }
     }catch(e){
         res.status(500).send(e);}
     return;
@@ -70,18 +86,26 @@ async function updateDB(req,res,next){
 async function changePass(req,res){
 
     try{
-    let data = await db.testmodel.findOne({email: req.body.email});
+        let token  =  req.body.token;
+        jwt.verify(token,'privatekey', (err, decode)=>{
+            if(err) return err;
+            return console.log(decode);
+        });
+        let data = await db.testmodel.findOne({email: req.body.email});
 
-    let result = await bcrypt.compare(req.body.password, data.password);
-    console.log(result);
-    if(result){
-        let newhash = await bcrypt.hash(req.body.newpassword,saltRounds)
-        console.log("newhash " + newhash);
-        await db.testmodel.updateOne({email: req.body.email}, {$set:{password:newhash}});
-        return res.send("Password Changed :)");
-    }else{
-        res.send("Password Not Matched!!");}
-    return;
+        let result = await bcrypt.compare(req.body.password, data.password);
+        if (data.email === token.email){
+            if(result){
+                let newhash = await bcrypt.hash(req.body.newpassword,saltRounds)
+                console.log("newhash " + newhash);
+                await db.testmodel.updateOne({email: req.body.email}, {$set:{password:newhash}});
+                return res.send("Password Changed :)");
+            }else{
+                res.send("Password Not Matched!!");}
+            return;
+        }else{
+            res.send("Wrong Access Token ");
+        }
     }catch(e){
         res.send("Something Went Wrong !!" + e);
     }
