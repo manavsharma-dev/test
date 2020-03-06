@@ -24,30 +24,21 @@ function signUP(req,res,next){
 
 function login(req,res,next){
     new Promise(async (resolve,reject)=>{
-        let data = await db.testmodel.find({email:req.body.email});
+        let data = await db.testmodel.findOne({email:req.body.email});
 
-        if(data.length == 0) return res.send("Wrong Email !!");
+        if(!data) return res.send("Wrong Email !!");
         else{
             resolve(data);}
         }).then(async (data)=>{
-
-            await bcrypt.compare(req.body.password, data[0].password, (err, result)=>{
+            await bcrypt.compare(req.body.password, data.password, async (err, result)=>{
                 if(err) return err;
-
                 if(result == true){
-                console.log(result);}
-                else{
-                    console.log("Password Not Matched...")
-                    return res.send("Password Not Matched...")
-                }
-            return res.send("Login Successful :) ");
+                    console.log(result);
+                    let token = await jwt.sign(data.toJSON(), 'privatekey', { expiresIn: '60m' });
+                    return res.send("token : " + token + " Expires in : 60 minutes");
+                }else{
+                    return res.send("Password Not Matched...")}
             });
-
-/////////////////////////
-
-            // let token = await jwt.sign(JSON.stringify(data[0]), 'privatekey');
-            // //console.log(token);
-            // //res.send(token);
         });
     return ;
 }
@@ -65,30 +56,13 @@ async function updateDB(req,res,next){
     try{
         let data = req.body;
         if(data.hasOwnProperty('password')){
-
-
             res.send(' Use Change Password API : /changepassword');
-            // new Promise(async (resolve,reject)=>{
-            // await bcrypt.hash(data.password, saltRounds,(err, hash)=>{
-            //     if(err) return err;
-
-            //     data.password = hash;
-            //     data = JSON.stringify(data);
-            //     return resolve(data);
-            // }).then(async (data)=>{
-            //     console.log("then" + JSON.stringify(data));
-            // await db.testmodel.updateOne({_id:req.params.id}, data,(error)=>{
-            //     if(error) return error;
-            //     return res.send('Updated Succesfully :)')});
-            // });});
         }else{
             await db.testmodel.updateOne({_id:req.params.id}, data,(error)=>{
                 if(error) return error;
-                return res.send('Updated Succesfully :)')});
-            }
+                return res.send('Updated Succesfully :)')});}
     }catch(e){
-        res.status(500).send(e);
-    }
+        res.status(500).send(e);}
     return;
 }
 
@@ -100,15 +74,13 @@ async function changePass(req,res){
 
     let result = await bcrypt.compare(req.body.password, data.password);
     console.log(result);
-
     if(result){
         let newhash = await bcrypt.hash(req.body.newpassword,saltRounds)
         console.log("newhash " + newhash);
         await db.testmodel.updateOne({email: req.body.email}, {$set:{password:newhash}});
         return res.send("Password Changed :)");
     }else{
-        res.send("Password Not Matched!!");
-    }
+        res.send("Password Not Matched!!");}
     return;
     }catch(e){
         res.send("Something Went Wrong !!" + e);
@@ -122,8 +94,7 @@ async function deleteDB(req,res,next){
         .deleteOne({ _id: req.params.id });
         res.send('Deleted Succesfully :(');
     } catch (error) {
-        res.status(500).send(error);
-    }
+        res.status(500).send(error);}
     return;
 }
 
