@@ -1,131 +1,154 @@
+/* eslint-disable no-console */
+/* eslint-disable no-unused-vars */
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const db = require("./testdb");
 
-const db = require('./testdb');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-
+const response = require("./dbResponse");
 
 const saltRounds = 10;
 
-async function signUP(req,res,next){
+async function signUP(req, res, next) {
+  const chkObj = await db.testmodel.findOne({ email: req.body.email });
 
-    let chkObj = await db.testmodel.findOne({email:req.body.email});
-
-    if(!chkObj){
-        new Promise((resolve, reject)=>{
-            bcrypt.hash(req.body.password, saltRounds,(err, hash)=>{
-            if(err) return err;
-            req.body.password = hash;
-            resolve(req.body);});
-        }).then(()=>{ console.log(req.body);
+  if (!chkObj) {
+    new Promise((resolve, reject) => {
+      bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+        if (err) return err;
+        req.body.password = hash;
+        return resolve(req.body);
+      });
+    })
+      .then(() => {
         db.testmodel.create(req.body);
-        }).catch(err => console.log(err));
-        res.send('Document Created Succesfully');
-        return;
-    }else{
-        console.log("Email Already Exists!!!");
-        res.send("Email Already Exists!!!");
+        next();
+      })
+      .catch(err => console.log(err));
+    return;
+  }
+  console.log("Email Already Exists!!!");
+  req.body.message = "Email Already Exists!!!";
+  return response.err(req, res);
+}
+
+function login(req, res, next) {
+  new Promise(async (resolve, reject) => {
+    const data = await db.testmodel.findOne({ email: req.body.email });
+
+    if (!data) {
+      req.body.message = "Email Not Found !!";
+      return response.err(req, res);
     }
-}
 
+    return resolve(data);
+  }).then(async data => {
+    await bcrypt.compare(
+      req.body.password,
+      data.password,
+      async (err, result) => {
+        if (err) return err;
 
-function login(req,res,next){
-    new Promise(async (resolve,reject)=>{
-        let data = await db.testmodel.findOne({email:req.body.email});
-
-        if(!data) return res.send("Email Not Found !!");
-        else{
-            resolve(data);}
-        }).then(async (data)=>{
-            console.log(data);
-            await bcrypt.compare(req.body.password, data.password, async (err, result)=>{
-                if(err) return err;
-                if(result == true){
-
-                    let token = await jwt.sign(data.toJSON(), 'privatekey', { expiresIn: '5m' });
-                    return res.status(200).send({ data,
-                        token:token
-                    });
-                }else{
-                    return res.send("Password Not Matched...")}
-            });
-        });
-    return ;
-}
-
-
-async function showDB(req,res,next){
-    let obj = await db.testmodel.find();
-    res.send(obj);
-    console.log(obj);
-    return;
-}
-
-
-async function updateDB(req,res,next){
-    try{
-        let token  =  req.headers.authorization;
-        let decode = false;
-        decode = await jwt.verify(token,'privatekey');
-        let data = req.body;
-        if (decode){
-            if(data.hasOwnProperty('password')){
-                res.send(' Use Change Password API : /changepassword');
-            }else{
-                await db.testmodel.updateOne({email:decode.email}, data,(error)=>{
-                    if(error) return error;
-                    return res.send('Updated Succesfully :)')});}
-        }else{
-            res.send("Invalid Token!!!");
+        if (result === true) {
+          const token = await jwt.sign(data.toJSON(), "privatekey", {
+            expiresIn: "5m"
+          });
+          req.body.token = token;
+          req.body.data = data;
+          return next();
         }
-    }catch(e){
-        console.log(e);
-        res.status(500).send(e);}
-    return;
+
+        req.body.message = "Invalid Password!!";
+        return response.err(req, res);
+      }
+    );
+  });
 }
 
+async function showDB(req, res, next) {
+  const obj = await db.testmodel.find();
+  res.send(obj);
+  console.log(obj);
+}
 
-async function changePass(req,res){
-
-    try{
-        let token  =  req.headers.authorization;
-        let result1 = await jwt.verify(token,'privatekey', (err, decoded)=>{
-                if(err) return err;
-                return decoded;
+async function updateDB(req, res, next) {
+  try {
+    const token = req.headers.authorization;
+    let decode = false;
+    decode = await jwt.verify(token, "privatekey");
+    const data = req.body;
+    if (decode) {
+      if (data.hasOwnProperty("password")) {
+        res.send(" Use Change Password API : /changepassword");
+      } else {
+        await db.testmodel.updateOne({ email: decode.email }, data, error => {
+          if (error) return error;
+          return next();
         });
-        let data = await db.testmodel.findOne({email: req.body.email});
-
-        if(!data) return res.send("Email Not Found !!");
-
-        let result = await bcrypt.compare(req.body.password, data.password);
-
-        if (data.email == result1.email){
-            if(result){
-                let newhash = await bcrypt.hash(req.body.newpassword,saltRounds)
-                console.log("newhash " + newhash);
-                await db.testmodel.updateOne({email: req.body.email}, {$set:{password:newhash}});
-                return res.send("Password Changed :)");000
-            }else{
-                res.send("Password Not Matched!!");}
-            return;
-        }else{
-            res.send("Wrong Access Token ");
-        }
-    }catch(e){
-        res.send("Something Went Wrong !!" + e);
+      }
+    } else {
+      req.body.message = " Invalid Token!!! ";
+      response.err(req, res);
     }
+  } catch (e) {
+    console.log(e);
+    req.body.message = e;
+    return response.err(req, res);
+  }
 }
 
+async function changePass(req, res) {
+  try {
+    const token = req.headers.authorization;
+    const result1 = await jwt.verify(token, "privatekey", (err, decoded) => {
+      if (err) return err;
+      return decoded;
+    });
+    const data = await db.testmodel.findOne({ email: req.body.email });
 
-async function deleteDB(req,res,next){
-    try {
-        await db.testmodel
-        .deleteOne({ _id: req.params.id });
-        res.send('Deleted Succesfully :(');
-    } catch (error) {
-        res.status(500).send(error);}
-    return;
+    if (!data) return response.success("Email Not Found !!");
+
+    const result = await bcrypt.compare(req.body.password, data.password);
+
+    if (data.email === result1.email) {
+      if (result) {
+        const newhash = await bcrypt.hash(req.body.newpassword, saltRounds);
+
+        await db.testmodel.updateOne(
+          { email: req.body.email },
+          { $set: { password: newhash } }
+        );
+        req.body.message = " Password Changed :)";
+        return response.success(req, res);
+      }
+      req.body.message = " Password Not Matched ";
+      return response.err(req, res);
+    }
+    req.body.message = " Wrong Access Token ";
+    return response.err(req, res);
+  } catch (e) {
+    req.body.message = " Something Went Wrong";
+    return response.err(req, res);
+  }
 }
 
+async function deleteDB(req, res, next) {
+  try {
+    let data = await db.testmodel.findOne({ _id: req.params.id });
+    console.log(data);
+    if (data != null) {
+      await db.testmodel.deleteOne({ _id: req.params.id });
+
+      req.body.message = " Deleted Succesfully ";
+      return response.success(req, res);
+    } else {
+      req.body.message = " Wrong ID ";
+      return response.err(req, res);
+    }
+  } catch (error) {
+    req.body.message = error;
+    return response.err(req, res);
+  }
+}
 
 module.exports.signUP = signUP;
 module.exports.showDB = showDB;

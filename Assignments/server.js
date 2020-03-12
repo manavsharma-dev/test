@@ -3,8 +3,8 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser'); 
 
-const func = require('./services/functions');
-const response = require('./services/response');
+const func = require('../services/functions');
+const response = require('../services/response');
 
 app.use(bodyParser.json());
 
