@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 
 const mongoose = require('mongoose');
 
@@ -20,6 +21,7 @@ mongoose.connection.on('disconnected', () => 'Connection disconnected');
 
 const schema = mongoose.Schema;
 
+// eslint-disable-next-line new-cap
 const modelSchema = new schema({
 
 	firstName: String,
