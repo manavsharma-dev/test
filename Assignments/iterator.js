@@ -1,39 +1,39 @@
 
-// data-structure 
+// data-structure
 
-let obj = {
-    name: ["a","b","c","d"],
-    age: 28,
-    skills: ["m", "n", "o"],
-}
- 
+const obj = {
+	name: ['a', 'b', 'c', 'd'],
+	age: 28,
+	skills: ['m', 'n', 'o'],
+};
+
 /*
  creating iterator with next method that returns
  the iterable data-structure's required content
- 
+
 */
- 
-function objIterator(object){
-    let i = 0;
-    return {
-        next:function(){
-        return object.name.length > i ?
-        { done: false, value: object.name[i++] }:
-        { done: true, value: undefined };
-        }
-    }
+
+function objIterator(object) {
+	let i = 0;
+	return {
+		next() {
+			return object.name.length > i
+				? { done: false, value: object.name[i++] }
+				: { done: true, value: undefined };
+		},
+	};
 }
- 
+
 /*
- 
- implementing iterator on given data-structure by 
+
+ implementing iterator on given data-structure by
  passing the data-structure to iterator as argument
- 
+
 */
-let iterator = objIterator(obj);
- 
-// obtaining data-structure's values by calling next method 
- 
+const iterator = objIterator(obj);
+
+// obtaining data-structure's values by calling next method
+
 console.log(iterator.next());
 console.log(iterator.next());
 console.log(iterator.next());

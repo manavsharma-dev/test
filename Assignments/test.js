@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable no-unused-vars */
 /*
 const express = require('express');
 const app = express();
@@ -30,7 +32,7 @@ app.delete('/api/delete/',(req,res)=>{
 	res.send("Delete Method");
 });       */
 
-////////////////
+// //////////////
 
 /*
 
@@ -50,12 +52,12 @@ function numberCheck(mobileNo, countryCode) {
 }
 */
 
-////////////////
+// //////////////
 
-//app.listen(3000,()=> console.log("waiting for action !!!!"));
+// app.listen(3000,()=> console.log("waiting for action !!!!"));
 
 /*
-let fs = require('fs');                         // including the module "file system" in our module as fs
+let fs = require('fs');                    // including the module "file system" in our module as fs
 
 function makeFile(a){                           // a is number of file user wants to get created
 	for(var i = 1;i <= a;i++){                  // check on number of files to create
@@ -77,7 +79,7 @@ function makeFile(a){                           // a is number of file user want
 function append_File(file, final){              //function that appends data of file to final file
 
 	fs.readFile(file,(err, data)=>{             //reading the file, the data to be appended
-		if(err) throw err; 
+		if(err) throw err;
 		console.log(data.toString());
 
 		fs.appendFile(final, file,(err)=>{
@@ -96,7 +98,7 @@ append_File(file,final);    // calling the append_file function
 
 */
 
-///////////////
+// /////////////
 
 
 /*
@@ -110,7 +112,7 @@ console.log(`Free Memory: ${freeMemory}`);
 
 */
 
-/////////////
+// ///////////
 
 /*
 
@@ -131,7 +133,7 @@ logger.log("hello");
 */
 
 
-///////////////
+// /////////////
 
 /*
 
@@ -147,7 +149,7 @@ if(cluster.isMaster){
 		worker.on('exit',()=>{
 			console.log("child processes made");
 		});
-		
+
 	});
 
 	cluster.on('exit',()=>{
@@ -165,7 +167,7 @@ if(cluster.isMaster){
 
 */
 
-/////////////////
+// ///////////////
 
 
 /*
@@ -189,47 +191,45 @@ child.on('exit', ()=>{
 var makeDir = cp.spawn(prog.folder,["new"]); */
 
 
-
-
-///////////////////////////
-//////////////////////////
+// /////////////////////////
+// ////////////////////////
 
 
 /*
 // using the node.js built in cluster module
 let cluster = require('cluster'),
- 
+
 // also using the node.js built in os (operating system) module
 os = require('os'),
- 
+
 // I can get a list of the systems cpus like this:
 cpus = os.cpus(),
- 
+
 // standard start message
 startmess = function () {
- 
+
     let pid = process.pid,
     processType = cluster.isMaster ? 'Master' : 'Worker',
     worker = cluster.worker || {
         id: 0
     };
- 
+
     console.log(processType + ' started on pid: ' + pid + ' worker.id: ' + worker.id);
- 
+
 };
- 
+
 // if this is the master
 if (cluster.isMaster) {
- 
+
     startmess();
- 
+
     // fork this script for each cpu
     let i = 0,
     len = cpus.length;
     while (i < len) {
- 
+
         cluster.fork();
- 
+
         i += 1;
 
     }
@@ -258,44 +258,45 @@ if (cluster.isMaster) {
         console.log('worker # : ' + worker.id + ' : ' + c);
 
         if (c === 10) {
- 
+
             cluster.worker.kill();
- 
+
         }
- 
+
         c += 1;
- 
+
     }, 100);
- 
+
 }
 
 */
 
 
-///////////////
-///////////////
+// /////////////
+// /////////////
 
 
 const cluster = require('cluster');
 const os = require('os');
+
 const numCPUs = os.cpus().length;
 
 if (cluster.isMaster) {
-  console.log(`This is Master!!`);
+	console.log('This is Master!!');
 
-  // Fork workers.
-  for (let i = 0; i < numCPUs; i++) {
-    cluster.fork();
-  }
+	// Fork workers.
+	// eslint-disable-next-line no-plusplus
+	for (let i = 0; i < numCPUs; i++) {
+		cluster.fork();
+	}
 
-  cluster.on('exit', (worker, code, signal) => {
-    console.log(`worker ${worker.process.pid} died`);
-  });
+	cluster.on('exit', (worker, code, signal) => {
+		console.log(`worker ${worker.process.pid} died`);
+	});
 } else {
 	console.log(`Worker ${process.pid} started`);
 }
 
 
-////////////////
-////////////////
-
+// //////////////
+// //////////////
