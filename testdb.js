@@ -1,4 +1,15 @@
+
 /* eslint-disable consistent-return */
+
+/*
+
+*This contains the database connection specification
+
+*@author Manav Sharma
+*since Monday, March 2, 2020
+
+*/
+
 
 const mongoose = require('mongoose');
 

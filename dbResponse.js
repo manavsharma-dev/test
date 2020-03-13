@@ -1,4 +1,15 @@
 
+/*
+
+*This is the Response file containing,
+required responses (for cerated practice dbServer )
+
+*@author Manav Sharma
+*since Monday, March 5, 2020
+
+*/
+
+
 function err(req, res) {
 	return res.send({
 		code: 400,
