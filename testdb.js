@@ -16,13 +16,14 @@ try {
 }
 
 
-mongoose.connection.on('connected', () => 'Connection established');
-mongoose.connection.on('disconnected', () => 'Connection disconnected');
+// eslint-disable-next-line no-console
+mongoose.connection.on('connected', () => console.log('Connection established'));
+// eslint-disable-next-line no-console
+mongoose.connection.on('disconnected', () => console.log('Connection disconnected'));
 
-const schema = mongoose.Schema;
+const { Schema } = mongoose;
 
-// eslint-disable-next-line new-cap
-const modelSchema = new schema({
+const modelSchema = new Schema({
 
 	firstName: String,
 	age: Number,

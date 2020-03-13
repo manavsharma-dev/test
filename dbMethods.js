@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('./testdb');
@@ -8,11 +9,18 @@ const response = require('./dbResponse');
 
 const saltRounds = 10;
 
+
+/*
+To Create a new User, for a unique email
+*/
+
 async function signUP(req, res, next) {
 	const chkObj = await db.testmodel.findOne({ email: req.body.email });
 
 	if (!chkObj) {
 		new Promise((resolve, reject) => {
+
+			// Calculating Hash for the given password for a unique email
 			bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
 				if (err) return err;
 				req.body.password = hash;
@@ -20,6 +28,7 @@ async function signUP(req, res, next) {
 			});
 		})
 			.then(() => {
+				// Creating the User with Provided Details in database
 				db.testmodel.create(req.body);
 				next();
 			})
@@ -32,6 +41,11 @@ async function signUP(req, res, next) {
 	return response.err(req, res);
 }
 
+
+/*
+To Log-In in system by passing email and password in body
+*/
+
 function login(req, res, next) {
 	new Promise(async (resolve, reject) => {
 		const data = await db.testmodel.findOne({ email: req.body.email });
@@ -43,6 +57,7 @@ function login(req, res, next) {
 
 		return resolve(data);
 	}).then(async (data) => {
+		// Comparing the passed password with the saved/actul passsword (Passed at Sign-Up)
 		await bcrypt.compare(
 			req.body.password,
 			data.password,
@@ -50,6 +65,7 @@ function login(req, res, next) {
 				if (err) return err;
 
 				if (result === true) {
+					// Generating Token after Successful Log-In, valid only for specified time
 					const token = await jwt.sign(data.toJSON(), 'privatekey', {
 						expiresIn: '5m',
 					});
@@ -65,16 +81,29 @@ function login(req, res, next) {
 	});
 }
 
+
+/*
+To Get all the data stored in database
+*/
+
 async function showDB(req, res, next) {
 	const obj = await db.testmodel.find();
 	res.send(obj);
 	console.log(obj);
 }
 
+
+/*
+To Update User's Details through access token obtained
+after user Log-In
+*/
+
 async function updateDB(req, res, next) {
 	try {
 		const token = req.headers.authorization;
 		let decode = false;
+
+		// Verifying token generated after log-in
 		decode = await jwt.verify(token, 'privatekey');
 		const data = req.body;
 		if (decode) {
@@ -82,6 +111,7 @@ async function updateDB(req, res, next) {
 			if (data.hasOwnProperty('password')) {
 				res.send(' Use Change Password API : /changepassword');
 			} else {
+				// If all goes well till this the details will be updated
 				await db.testmodel.updateOne({ email: decode.email }, data, (error) => {
 					if (error) return error;
 					return next();
@@ -93,28 +123,33 @@ async function updateDB(req, res, next) {
 		}
 		return;
 	} catch (e) {
-		console.log(e);
 		req.body.message = e;
 		// eslint-disable-next-line consistent-return
 		return response.err(req, res);
 	}
 }
 
+
+/*
+For Changing Password, through access token obtained
+after user Log-In by using email, password, New-Password
+*/
+
 async function changePass(req, res) {
 	try {
 		const token = req.headers.authorization;
-		const result1 = await jwt.verify(token, 'privatekey', (err, decoded) => {
-			if (err) return err;
-			return decoded;
-		});
+		// Verifying token generated after log-in
+		const result1 = await jwt.verify(token, 'privatekey', (err, decoded) => decoded);
+
 		const data = await db.testmodel.findOne({ email: req.body.email });
 
 		if (!data) return response.success('Email Not Found !!');
-
+		// Comparing the passed password and actual one
 		const result = await bcrypt.compare(req.body.password, data.password);
 
 		if (data.email === result1.email) {
 			if (result) {
+				// You made it :) password will be changed and stored in database
 				const newhash = await bcrypt.hash(req.body.newpassword, saltRounds);
 
 				await db.testmodel.updateOne(
@@ -135,12 +170,18 @@ async function changePass(req, res) {
 	}
 }
 
+
+/*
+For deleting a Specified User from Database
+Using ObjectID Passed in request body
+*/
+
 async function deleteDB(req, res, next) {
 	try {
-		const data = await db.testmodel.findOne({ _id: req.params.id });
+		const data = await db.testmodel.findOne({ _id: req.body.id });
 		console.log(data);
 		if (data != null) {
-			await db.testmodel.deleteOne({ _id: req.params.id });
+			await db.testmodel.deleteOne({ _id: req.body.id });
 
 			req.body.message = ' Deleted Succesfully ';
 			return response.success(req, res);
@@ -152,6 +193,8 @@ async function deleteDB(req, res, next) {
 		return response.err(req, res);
 	}
 }
+
+// Exporting the above function to be used in other files
 
 module.exports.signUP = signUP;
 module.exports.showDB = showDB;
