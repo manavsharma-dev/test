@@ -40,6 +40,7 @@ const modelSchema = new Schema({
 	age: Number,
 	email: String,
 	password: String,
+	isverified: { type: Boolean, default: false },
 });
 
 const testmodel = mongoose.model('demo', modelSchema);

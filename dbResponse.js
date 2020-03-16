@@ -48,7 +48,7 @@ function updated(req, res) {
 function doneSingUp(req, res) {
 	res.send({
 		code: 200,
-		message: 'Employee Added Successfully',
+		message: 'Employee Added Successfully\n Please verify your account using link sent on your email ',
 		data: {
 			employee: req.body,
 		},

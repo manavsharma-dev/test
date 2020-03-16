@@ -30,7 +30,6 @@ async function signUP(req, res, next) {
 
 	if (!chkObj) {
 		new Promise((resolve, reject) => {
-
 			// Calculating Hash for the given password for a unique email
 			bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
 				if (err) return err;
@@ -54,7 +53,7 @@ async function signUP(req, res, next) {
 
 
 /*
-To Log-In in system by passing email and password in body
+To Log-In in system by passing email and password in body, only if the user is verified
 */
 
 function login(req, res, next) {
@@ -74,18 +73,21 @@ function login(req, res, next) {
 			data.password,
 			async (err, result) => {
 				if (err) return err;
-
-				if (result === true) {
+				if (data.isverified === true) {
+					if (result === true) {
 					// Generating Token after Successful Log-In, valid only for specified time
-					const token = await jwt.sign(data.toJSON(), 'privatekey', {
-						expiresIn: '5m',
-					});
-					req.body.token = token;
-					req.body.data = data;
-					return next();
-				}
+						const token = await jwt.sign(data.toJSON(), 'privatekey', {
+							expiresIn: '5m',
+						});
+						req.body.token = token;
+						req.body.data = data;
+						return next();
+					}
 
-				req.body.message = 'Invalid Password!!';
+					req.body.message = 'Invalid Password!!';
+					return response.err(req, res);
+				}
+				req.body.message = 'Not Verified !! Verify through link sent on Registered Email';
 				return response.err(req, res);
 			},
 		);
@@ -113,26 +115,27 @@ async function updateDB(req, res, next) {
 	try {
 		const token = req.headers.authorization;
 		let decode = false;
-
 		// Verifying token generated after log-in
 		decode = await jwt.verify(token, 'privatekey');
 		const data = req.body;
-		if (decode) {
+		if (data.isverified === true) {
+			if (decode) {
 			// eslint-disable-next-line no-prototype-builtins
-			if (data.hasOwnProperty('password')) {
-				res.send(' Use Change Password API : /changepassword');
-			} else {
+				if (data.hasOwnProperty('password')) {
+					res.send(' Use Change Password API : /changepassword');
+				} else {
 				// If all goes well till this the details will be updated
-				await db.testmodel.updateOne({ email: decode.email }, data, (error) => {
-					if (error) return error;
-					return next();
-				});
+					await db.testmodel.updateOne({ email: decode.email }, data, (error) => {
+						if (error) return error;
+						return next();
+					});
+				}
+			} else {
+				req.body.message = ' Invalid Token!!! ';
+				response.err(req, res);
 			}
-		} else {
-			req.body.message = ' Invalid Token!!! ';
-			response.err(req, res);
 		}
-		return;
+		return res.send('Please Verify your email first');
 	} catch (e) {
 		req.body.message = e;
 		// eslint-disable-next-line consistent-return
@@ -190,7 +193,6 @@ Using ObjectID Passed in request body
 async function deleteDB(req, res, next) {
 	try {
 		const data = await db.testmodel.findOne({ _id: req.body.id });
-		console.log(data);
 		if (data != null) {
 			await db.testmodel.deleteOne({ _id: req.body.id });
 
@@ -205,11 +207,11 @@ async function deleteDB(req, res, next) {
 	}
 }
 
-// Exporting the above function to be used in other files
+// Exporting the above functions to be used in other files
 
 module.exports.signUP = signUP;
+module.exports.login = login;
 module.exports.showDB = showDB;
 module.exports.updateDB = updateDB;
 module.exports.deleteDB = deleteDB;
-module.exports.login = login;
 module.exports.changePass = changePass;
