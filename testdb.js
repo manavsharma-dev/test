@@ -12,7 +12,7 @@
 
 const mongoose = require('mongoose');
 
-const mongoDBURL = 'mongodb+srv://Manav:manav123@cluster1-learn-mzwyn.mongodb.net/testdb';
+const mongoDBURL = process.env.mongoURL;
 
 // mongo "mongodb+srv://cluster1-learn-mzwyn.mongodb.net/test"  --username Manav
 
@@ -20,6 +20,7 @@ try {
 	mongoose.connect(mongoDBURL, {
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
+		useCreateIndex: true,
 	});
 } catch (e) {
 	return (e);
@@ -36,10 +37,12 @@ const { Schema } = mongoose;
 const modelSchema = new Schema({
 
 	firstName: String,
-	age: Number,
-	email: String,
+	age: String,
+	email: { type: String, unique: true },
 	password: String,
 	isverified: { type: Boolean, default: false },
+	verfToken: { type: String, unique: true },
+	city: { type: String, required: true },
 });
 
 const testmodel = mongoose.model('demo', modelSchema);
